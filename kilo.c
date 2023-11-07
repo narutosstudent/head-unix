@@ -1,19 +1,18 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 int main(int argc, char *argv[])
 {
-	// Initialize a file pointer to NULL. This will be used to refer to the file if one is provided.
 	FILE *filePointer = NULL;
 
-	// 1. Check if command line arguments are provided.
-	// argc counts how many arguments. If argc is 1, no file name was provided.
-	// argv contains the actual arguments; argv[0] is the program name, argv[1] would be the first argument.
-
-	if (argc == 1)
+	bool isFileProvided = argc == 2;
+	bool isStdinProvided = argc == 1;
+	if (isStdinProvided)
 	{
 		filePointer = stdin;
 	}
-	else if (argc == 2)
+	else if (isFileProvided)
 	{
 		// A file name was provided, so attempt to open it.
 		filePointer = fopen(argv[1], "r");
