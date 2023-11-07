@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gcc -Wall *.c -o my_program
+gcc -Wall *.c -o cchead
