@@ -1,65 +1,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h> // Needed for strcmp
 
 int main(int argc, char *argv[])
 {
 	FILE *filePointer = NULL;
-	bool isFileProvided = argc == 2;
-	bool isStdinProvided = argc == 1;
+	int numLines = 10; // Default number of lines
+	bool n_option_provided = false;
 
-	if (isStdinProvided)
+	// Loop through all arguments to find '-n' option and filename
+	for (int i = 1; i < argc; ++i)
 	{
-		filePointer = stdin;
-	}
-	else if (isFileProvided)
-	{
-		filePointer = fopen(argv[1], "r");
-		if (filePointer == NULL)
+		// Check for '-n' option
+		if (strcmp(argv[i], "-n") == 0)
 		{
-			fprintf(stderr, "Error opening file: %s\n", argv[1]);
-			return 1;
+			if (i + 1 < argc)
+			{ // Make sure there is another argument after '-n'
+				long val;
+				char *next_char;
+				val = strtol(argv[i + 1], &next_char, 10); // More robust than atoi
+				if (*next_char != '\0' || val <= 0)
+				{ // Check for valid positive integer
+					fprintf(stderr, "Invalid number of lines: %s\n", argv[i + 1]);
+					return 1;
+				}
+				numLines = val;
+				n_option_provided = true;
+				i++; // Skip the next argument as it is part of '-n'
+			}
+			else
+			{
+				fprintf(stderr, "Missing number of lines after -n\n");
+				return 1;
+			}
+		}
+		else
+		{
+			// Argument is not '-n', treat it as a filename
+			filePointer = fopen(argv[i], "r");
+			if (filePointer == NULL)
+			{
+				fprintf(stderr, "Error opening file: %s\n", argv[i]);
+				return 1;
+			}
+			break; // Stop processing arguments after finding the file
 		}
 	}
-	else
+
+	if (!filePointer)
 	{
-		fprintf(stderr, "Usage: %s [filename]\n", argv[0]);
+		fprintf(stderr, "No file provided\n");
 		return 1;
 	}
 
-	const int MAX_LINE_LENGTH = 1024; // Adjust the line length as needed
-	const int MAX_LINES = 10;
+	const int MAX_LINE_LENGTH = 1024;
 	char buffer[MAX_LINE_LENGTH];
 	int lineCounter = 0;
 
-	while (lineCounter < MAX_LINES)
+	// Read and print the specified number of lines
+	while (lineCounter < numLines)
 	{
 		if (fgets(buffer, MAX_LINE_LENGTH, filePointer) == NULL)
 		{
 			if (feof(filePointer))
 			{
-				// End of file reached, break out of the loop.
-				break;
+				break; // Reached end of file
 			}
 			if (ferror(filePointer))
 			{
-				// An error occurred while reading the file.
-				fprintf(stderr, "Error reading file: %s\n", isFileProvided ? argv[1] : "standard input");
+				fprintf(stderr, "Error reading file: %s\n", argv[argc - 1]);
 				fclose(filePointer);
 				return 1;
 			}
 		}
 		else
 		{
-			// Successfully read a line, so print it.
 			printf("%s", buffer);
 			lineCounter++;
 		}
 	}
 
-	if (isFileProvided && fclose(filePointer) != 0)
+	// Close the file if it was opened
+	if (filePointer && fclose(filePointer) != 0)
 	{
-		fprintf(stderr, "Error closing file: %s\n", argv[1]);
+		fprintf(stderr, "Error closing file: %s\n", argv[argc - 1]);
 		return 1;
 	}
 
